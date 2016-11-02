@@ -5,6 +5,8 @@ Main program description.
     Date: 1st November 2016
     Version: 0.1
 
+    Now on git repository
+
     Aim: Python Homework Project 2: Design and code a Blackjack game using
     the principle of obejcts extensively
 
@@ -324,7 +326,7 @@ def print_game_status(cardsPrivate, playerNo):
 
 
 def playTurn(playerNo):
-    """Play the turn for player numner PlayerNo."""
+    """Play the turn for player number PlayerNo."""
     turnFinished = False
     print("Player %2d" % (playerNo+1))
     while turnFinished is False:
@@ -338,7 +340,7 @@ def playTurn(playerNo):
         print_game_status(False, playerNo)
         moveType = raw_input(
                             "Would you like to twist (T), stick (S)"
-                            " or buy a card(B)?"
+                            " or buy a card(B)? "
                             )
         print(moveType.lower())
         print()
@@ -352,6 +354,14 @@ def playTurn(playerNo):
             player[playerNo].status = "STICK!"
             turnFinshed = True
             break
+        elif moveType.lower() == "b":
+            print("buy start")
+            player[playerNo].pile.add_to_pile(deck.give_top_card())
+            player[playerNo].cashTotal -= player[playerNo].initialStake
+            player[playerNo].stake += player[playerNo].initialStake
+            print("buy end")
+
+
 # deck.list_pile()
 
 # print("Initialise players piles\n========================")
@@ -367,7 +377,6 @@ print_game_status(True, 2)
 """Take players initial stakes"""
 for loop1 in range(1, players):
     stakeRequired = True
-    test = true
 
     while stakeRequired:
         try:
