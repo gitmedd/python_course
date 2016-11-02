@@ -29,6 +29,7 @@ Main program description.
     and plays to the highest score
 """
 
+
 from __future__ import print_function
 import random
 
@@ -289,10 +290,12 @@ class Player(object):
 
     def print_cards(self, private):
         """Printer out the players cards or XXs if they area face down."""
-        print("| Player %2d |  %6s  |  %4d  |  %4d |  %4d | "
-              % (self.playerNumber+1,
-              self.status, self.cashTotal, self.stake,
-              self.pile.pile_value(private)), end="")
+        print(
+             "| Player %2d |  %6s  |  %4d  |  %4d |  %4d | "
+             % (self.playerNumber+1,
+                self.status, self.cashTotal, self.stake,
+                self.pile.pile_value(private)
+                ), end="")
         self.pile.list_pile_short(private)
         print("")
 
@@ -333,13 +336,17 @@ def playTurn(playerNo):
             turnFinished = True
             break
         print_game_status(False, playerNo)
-        moveType = raw_input("Would you like to twist (T), stick (S)"
-              " or buy a card(B)?")
+        moveType = raw_input(
+                            "Would you like to twist (T), stick (S)"
+                            " or buy a card(B)?"
+                            )
         print(moveType.lower())
+        print()
         if moveType.lower() == "t":
             player[playerNo].pile.add_to_pile(deck.give_top_card())
-            player[playerNo].pile.make_card_face_up(player[playerNo]
-                .pile.pile_count()-1)
+            player[playerNo].pile.make_card_face_up(
+                                                    player[playerNo]
+                                                    .pile.pile_count()-1)
             print ("Card Added")
         elif moveType.lower() == "s":
             player[playerNo].status = "STICK!"
@@ -360,6 +367,7 @@ print_game_status(True, 2)
 """Take players initial stakes"""
 for loop1 in range(1, players):
     stakeRequired = True
+    test = true
 
     while stakeRequired:
         try:
