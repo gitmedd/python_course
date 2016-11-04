@@ -1,3 +1,4 @@
+
 """
 Main program description.
 
@@ -79,7 +80,7 @@ class Pile(object):
         "K", "W"
     ]
     cardValues = [
-        1, 2, 3, 4,
+        11, 2, 3, 4,
         5, 6, 7, 8,
         9, 10, 10, 10,
         10, 1
@@ -281,7 +282,7 @@ class Player(object):
 
     stake = 0
 
-    def __init__(self, playerNumber, cashTotal):
+    def __init__(self, playerNumber, cashTotal, dealer=False):
         """Initialisation function for the player class."""
         # print("Player %d pile initialising" % (playerNumber+1))
         self.pile = Pile(0)
@@ -289,15 +290,33 @@ class Player(object):
         self.playerNumber = playerNumber
         self.status = "OK"
         self.initialStake = 0
+        self.roundLost = False
+        self.dealer = dealer
+        self.fiveCard = False
+        self.twentyOne = False
+        self.blackJack = False
+        self.pontoon = False
 
     def print_cards(self, private):
         """Printer out the players cards or XXs if they area face down."""
-        print(
-             "| Player %2d |  %6s  |  %4d  |  %4d |  %4d | "
-             % (self.playerNumber+1,
-                self.status, self.cashTotal, self.stake,
-                self.pile.pile_value(private)
-                ), end="")
+        if self.dealer:
+            print(
+                "| Player %2d (D) |  %6s  | %d%d%d%d | %4d  |  %4d |  %4d | "
+                % (self.playerNumber+1,
+                    self.status,
+                    self.fiveCard, self.twentyOne,
+                    self.blackJack, self.pontoon,
+                    self.cashTotal, self.stake,
+                    self.pile.pile_value(private)), end="")
+        else:
+            print(
+                "| Player %2d     |  %6s  | %d%d%d%d | %4d  |  %4d |  %4d | "
+                % (self.playerNumber+1,
+                    self.status,
+                    self.fiveCard, self.twentyOne,
+                    self.blackJack, self.pontoon,
+                    self.cashTotal, self.stake,
+                    self.pile.pile_value(private)), end="")
         self.pile.list_pile_short(private)
         print("")
 
@@ -310,12 +329,13 @@ endGame = False
 player = []
 initial_cash = 100
 dealer = 0
+playersLost = 0
 
 
 def print_game_status(cardsPrivate, playerNo):
     """Print out the status of the game for all players."""
     print("=================================================")
-    print("| Player No |  STATUS  | Wallet | Stake | Total | Cards")
+    print("|   Player No   |  STATUS  | 5TBP | Wallet | Stake | Total | Cards")
     print("-------------------------------------------------")
     for loop1 in range(0, players):
         if (loop1 == playerNo):
@@ -335,13 +355,20 @@ def playTurn(playerNo):
             player[0].cashTotal += player[playerNo].stake
             player[playerNo].stake = 0
             player[playerNo].status = "BUST!"
+            player[playerNo].roundLost = True
             turnFinished = True
             break
         print_game_status(False, playerNo)
-        moveType = raw_input(
+        if(
+                player[playerNo].initialStake < player[playerNo].cashTotal and
+                playerNo > 0):
+            cardBuyable = True
+            moveType = raw_input(
                             "Would you like to twist (T), stick (S)"
-                            " or buy a card(B)? "
-                            )
+                            " or buy a card(B)? ")
+        else:
+            cardBuyable = False
+            moveType = raw_input("Would you like to twist (T) or stick (S)? ")
         print(moveType.lower())
         print()
         if moveType.lower() == "t":
@@ -354,23 +381,33 @@ def playTurn(playerNo):
             player[playerNo].status = "STICK!"
             turnFinshed = True
             break
-        elif moveType.lower() == "b":
+        elif moveType.lower() == "b" and cardBuyable and playerNo > 0:
             print("buy start")
             player[playerNo].pile.add_to_pile(deck.give_top_card())
             player[playerNo].cashTotal -= player[playerNo].initialStake
             player[playerNo].stake += player[playerNo].initialStake
             print("buy end")
-
+        else:
+            print("You have not selected a valid option!")
+    if player[playerNo].pile.pile_count() == 5:
+        player[playerNo].fiveCard = True
+    if player[playerNo].pile.pile_value(True) == 21:
+        player[playerNo].twentyOne = True
+    if player[playerNo].pile.pile_value(False) == 21:
+        player[playerNo].twentyOne = True
 
 # deck.list_pile()
 
 # print("Initialise players piles\n========================")
 print("\nGame On!!!")
 for loop1 in range(0, players):
-    player.append(Player(loop1, initial_cash))
-    player[loop1].pile.add_to_pile(deck.give_top_card())
     if loop1 is 0:
+        player.append(Player(loop1, initial_cash, True))
+        player[loop1].pile.add_to_pile(deck.give_top_card())
         player[loop1].pile.make_card_face_up(0)
+    else:
+        player.append(Player(loop1, initial_cash))
+        player[loop1].pile.add_to_pile(deck.give_top_card())
 print_game_status(True, 2)
 
 
@@ -415,17 +452,57 @@ print("Second cards dealt")
 for loop1 in range(0, players):
     player.append(Player(loop1, initial_cash))
     player[loop1].pile.add_to_pile(deck.give_top_card())
+    cardValuesTemp = (
+                     player[loop1].pile.cardNamesAbb
+                     [player[loop1].pile.cards[0].name] +
+                     (
+                      player[loop1].pile.cardNamesAbb
+                      [player[loop1].pile.cards[1].name]
+                      ))
+    print(cardValuesTemp)
+    if (cardValuesTemp == "J1" or cardValuesTemp == "1J"):
+        player[loop1].blackJack = True
+        player[loop1].pontoon = True
+    if (cardValuesTemp == "Q1" or cardValuesTemp == "1Q" or
+            cardValuesTemp == "K1" or cardValuesTemp == "1K"):
+        player[loop1].pontoon = True
+
     if loop1 is 0:
         player[loop1].pile.make_card_face_up(0)
     player[loop1].print_cards(False)
 print("\n==============\n")
 
-print()
-for loop1 in range(1, players):
-    playTurn(loop1)
 
-playTurn(0)  # Need to adjust Playturn so that dealer gives money away
+for playerNo in range(1, players):
+    playTurn(playerNo)
+    if player[playerNo].roundLost is True:
+        playersLost += 1
+
+if playersLost < players - 1:
+    playTurn(0)
+
+print()
+# TODO  Money not transferred from BANK to PLayer if bank loses.
+# TODO  Current works correctly if the dealer busts but not if he sticks
+#       Sort out!
+if player[0].pontoon is True or player[0].twentyOne is True:
+    player[0].roundLost = False
+
+if player[0].roundLost is True:
+    for playerNo in range(1, players):
+        if (player[playerNo].pontoon or player[playerNo].fiveCard is True):
+            player[playerNo].stake *= 2
+        player[playerNo].cashTotal += 2*player[playerNo].stake
+        player[0].cashTotal -= player[playerNo].stake
+        player[playerNo].stake = 0
+        player[playerNo].initialStake = 0
+else:
+    for playerNo in range(1, players):
+        player[0].cashTotal += player[playerNo].stake
+        player[playerNo].stake = 0
+        player[playerNo].initialStake = 0
+
 
 print()
 print("Game Over for all")
-print_game_status(False, 0)
+print_game_status(True, 0)
